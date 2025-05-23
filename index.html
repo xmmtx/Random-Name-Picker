@@ -18,10 +18,46 @@
 #names { display:none;padding:5px; }
 #namesbox { min-height:400px;font-size:32px;color:#333;resize:none;border:1px solid #F39C12; }
 .extra { font-size:16px;margin-top:20px; }
-#result1 { background:#000;color:#fbe34b;padding:20px;z-index:10;margin-top:-150px; }
+#result1 { background:#000;color:#fbe34b;padding:20px;z-index:10;margin-top:-150px; /* Initial state before winner */ }
 body { background:#F1C40F url(img/bg-noise-orange.png); }
 #varnote { font-size:40px;text-align:center;padding:30px; }
 .copyright { font-size:11px;font-family:Tahoma;color:#9B59B6; }
+
+/* Styles for enhanced winner display */
+.winner-display {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  width: 80vw !important; /* Responsive width */
+  height: auto !important; /* Auto height based on content */
+  max-height: 80vh; /* Max height */
+  font-size: 10vw !important; /* Responsive font size */
+  line-height: 1.2 !important;
+  padding: 40px !important;
+  margin: 0 !important; /* Reset margin */
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  z-index: 1000 !important; /* Ensure it's on top */
+  border-radius: 15px;
+  box-shadow: 0 0 30px rgba(0,0,0,0.5);
+}
+.winner-display .extra {
+  font-size: 2vw !important; /* Smaller font for the "remove" button link */
+  margin-top: 30px !important;
+}
+.winner-display .extra .button {
+  font-size: 1.8vw !important; /* Adjust button font size within winner display */
+  padding: 15px 25px !important;
+}
+
+/* Temporary highlight for namesbox */
+.highlight-namesbox {
+  box-shadow: 0 0 15px #F39C12;
+  border: 2px solid #E67E22 !important;
+}
 </style>
 
 </head>
@@ -30,8 +66,9 @@ body { background:#F1C40F url(img/bg-noise-orange.png); }
   <div class="full-head" style="width:100%;background:#111 url(img/header-bg.png) repeat-x center top;border-bottom:1px solid #D35400;">
 	<div class="row">
 		<div class="large-12 columns" style="padding-top:50px;background:#111 url(img/header-bg.png) repeat-x center top;z-index:20;">
-		<ul class="button-group even-4">
+		<ul class="button-group even-5"> {/* Adjusted for 5 buttons */}
       <li><a href="index.html" class="alert button" id="reset">Reset</a></li>
+      <li><button class="button" id="clearlist" onclick="clearList();">Clear List</button></li>
 			<li><button class="button" id="list" onclick="namelist();">Name List</button></li>
 			<li><button class="button" id="save" onclick="save();">Save &amp; Update</button></li>
 			<li><button class="success button" id="go" onclick="go();">GO!</button></li>
@@ -66,314 +103,304 @@ body { background:#F1C40F url(img/bg-noise-orange.png); }
   <script>$(document).foundation();</script>
   
 <script>
-var text;
-var names = new Array('Barbara McFell',
-                      'Tempo McKeteketly',
-                      'Maonga Irpaae',
-                      'Jose Tunisia',
-                      'Bob Bobson',
-                      'Harold Greenoff',
-                      'Jeff Penn',
-                      'Ewan Freedom',
-                      'Benjamin Turkin',
-                      'Robert Harper',
-                      'Sally Cladwell',
-                      'Gregory Tomson',
-                      'Benita Dano',
-                      'Tameka Chea',
-                      'Fernando Guntrum',
-                      'Cody Devita',
-                      'Margery Moloney',
-                      'Jessie Wagar',
-                      'Jessie Burkhard',
-                      'Cody Lamotte',
-                      'Tabatha Cantley',
-                      'Hugh Fullwood',
-                      'Emilia Janusz',
-                      'Erik Taketa',
-                      'Lenore Laughter',
-                      'Kathrine Palazzo',
-                      'Lonnie Garron',
-                      'Tyrone Shott',
-                      'Gay Duble',
-                      'Pearlie Newberg',
-                      'Clinton Rayl',
-                      'Louisa Strey',
-                      'Saundra Ingenito',
-                      'Fernando Jenkin',
-                      'Maricela Tonkin',
-                      'Allie Borjas',
-                      'Clinton Rickenbacker',
-                      'Cody Golay',
-                      'Jerri Tienda',
-                      'Nita Pippen',
-                      'Alejandra Bonhomme',
-                      'Nelson Eguia',
-                      'Rae Velasques',
-                      'Boyce Edeker',
-                      'Cedrick Culotti',
-                      'Elenora Nagindas',
-                      'Arletta Miran',
-                      'Alica Knudsvig',
-                      'Von Ostroot',
-                      'Tomika Nuesca',
-                      'Felton Pattinson',
-                      'Cristopher Laper',
-                      'Shonna Parrotta',
-                      'Sarina Macurdy',
-                      'Waylon Companie',
-                      'Shon Carratura',
-                      'Jae Kneser',
-                      'Janett Papiernik',
-                      'Lynwood Bellar',
-                      'Jeramy Contopoulos',
-                      'Hong Nederostek',
-                      'Gigi Mccarn',
-                      'Sid Mursko',
-                      'Bielser',
-                      'Jospeh Lustberg',
-                      'Spring Luckinbill',
-                      'Ciera Chionchio',
-                      'Marleen Litchard',
-                      'Eldridge Brynga',
-                      'Leif Dinho',
-                      'Gigi Kornblatt',
-                      'Idell Chagollan',
-                      'Michale Mcclod'
-                      );
+// Global variable to store the name of the randomly selected winner.
+var text; 
+// Global variable to store the default list of names. Used when no URL params are provided or after clearing the list.
+var defaultNames = [
+  'Barbara McFell', 'Tempo McKeteketly', 'Maonga Irpaae', 'Jose Tunisia', 'Bob Bobson',
+  'Harold Greenoff', 'Jeff Penn', 'Ewan Freedom', 'Benjamin Turkin', 'Robert Harper',
+  'Sally Cladwell', 'Gregory Tomson', 'Benita Dano', 'Tameka Chea', 'Fernando Guntrum',
+  'Cody Devita', 'Margery Moloney', 'Jessie Wagar', 'Jessie Burkhard', 'Cody Lamotte',
+  'Tabatha Cantley', 'Hugh Fullwood', 'Emilia Janusz', 'Erik Taketa', 'Lenore Laughter',
+  'Kathrine Palazzo', 'Lonnie Garron', 'Tyrone Shott', 'Gay Duble', 'Pearlie Newberg',
+  'Clinton Rayl', 'Louisa Strey', 'Saundra Ingenito', 'Fernando Jenkin', 'Maricela Tonkin',
+  'Allie Borjas', 'Clinton Rickenbacker', 'Cody Golay', 'Jerri Tienda', 'Nita Pippen',
+  'Alejandra Bonhomme', 'Nelson Eguia', 'Rae Velasques', 'Boyce Edeker', 'Cedrick Culotti',
+  'Elenora Nagindas', 'Arletta Miran', 'Alica Knudsvig', 'Von Ostroot', 'Tomika Nuesca',
+  'Felton Pattinson', 'Cristopher Laper', 'Shonna Parrotta', 'Sarina Macurdy', 'Waylon Companie',
+  'Shon Carratura', 'Jae Kneser', 'Janett Papiernik', 'Lynwood Bellar', 'Jeramy Contopoulos',
+  'Hong Nederostek', 'Gigi Mccarn', 'Sid Mursko', 'Bielser', 'Jospeh Lustberg',
+  'Spring Luckinbill', 'Ciera Chionchio', 'Marleen Litchard', 'Eldridge Brynga', 'Leif Dinho',
+  'Gigi Kornblatt', 'Idell Chagollan', 'Michale Mcclod'
+];
+// Global array to hold the current list of names being used by the application.
+var names = []; 
+// Global variable for the default headline text.
+var originalHeadline = "Let's see who is The Lucky One?";
+// Global timeout ID for managing feedback message display.
+var feedbackTimeout;
 
-function reset(){
-  // re-enable go button
-  setTimeout("$('#go').removeAttr('disabled')",11005);
-  var namesbreak = "";
-  if(gup('names') != ""){
-    var names = gup('names');
-    namesbreak = names.replace(/101/g,'\n');
-    namesbreak = namesbreak.replace(/%20/g,' ');          
-    }
-    else   {
-      var names = new Array('Barbara McFell',
-                      'Tempo McKeteketly',
-                      'Maonga Irpaae',
-                      'Jose Tunisia',
-                      'Bob Bobson',
-                      'Harold Greenoff',
-                      'Jeff Penn',
-                      'Ewan Freedom',
-                      'Benjamin Turkin',
-                      'Robert Harper',
-                      'Sally Cladwell',
-                      'Gregory Tomson',
-                      'Benita Dano',
-                      'Tameka Chea',
-                      'Fernando Guntrum',
-                      'Cody Devita',
-                      'Margery Moloney',
-                      'Jessie Wagar',
-                      'Jessie Burkhard',
-                      'Cody Lamotte',
-                      'Tabatha Cantley',
-                      'Hugh Fullwood',
-                      'Emilia Janusz',
-                      'Erik Taketa',
-                      'Lenore Laughter',
-                      'Kathrine Palazzo',
-                      'Lonnie Garron',
-                      'Tyrone Shott',
-                      'Gay Duble',
-                      'Pearlie Newberg',
-                      'Clinton Rayl',
-                      'Louisa Strey',
-                      'Saundra Ingenito',
-                      'Fernando Jenkin',
-                      'Maricela Tonkin',
-                      'Allie Borjas',
-                      'Clinton Rickenbacker',
-                      'Cody Golay',
-                      'Jerri Tienda',
-                      'Nita Pippen',
-                      'Alejandra Bonhomme',
-                      'Nelson Eguia',
-                      'Rae Velasques',
-                      'Boyce Edeker',
-                      'Cedrick Culotti',
-                      'Elenora Nagindas',
-                      'Arletta Miran',
-                      'Alica Knudsvig',
-                      'Von Ostroot',
-                      'Tomika Nuesca',
-                      'Felton Pattinson',
-                      'Cristopher Laper',
-                      'Shonna Parrotta',
-                      'Sarina Macurdy',
-                      'Waylon Companie',
-                      'Shon Carratura',
-                      'Jae Kneser',
-                      'Janett Papiernik',
-                      'Lynwood Bellar',
-                      'Jeramy Contopoulos',
-                      'Hong Nederostek',
-                      'Gigi Mccarn',
-                      'Sid Mursko',
-                      'Bielser',
-                      'Jospeh Lustberg',
-                      'Spring Luckinbill',
-                      'Ciera Chionchio',
-                      'Marleen Litchard',
-                      'Eldridge Brynga',
-                      'Leif Dinho',
-                      'Gigi Kornblatt',
-                      'Idell Chagollan',
-                      'Michale Mcclod'
-                      );
-    for(var i in names){
-      name = names[i];
-      if (name == "" || typeof(name) == undefined){}else{
-         namesbreak = namesbreak + name + "\n";
-      }
+// Resets the list of names to default or loads from URL parameters, and updates UI.
+function reset() {
+  // Re-enable the "GO!" button after a delay (original functionality).
+  setTimeout(function() { $('#go').removeAttr('disabled'); }, 11005);
+
+  const params = new URLSearchParams(window.location.search);
+  const namesParam = params.get('names'); // Get 'names' parameter from URL.
+  var loadedFromURL = false;
+
+  // If 'names' parameter exists in the URL.
+  if (namesParam) {
+    // Split comma-separated names, decode URI components, and trim whitespace.
+    let urlNamesList = namesParam.split(',').map(function(name) { return decodeURIComponent(name.trim()); });
+    // Filter out any empty strings that might result from splitting or trimming.
+    names = urlNamesList.filter(function(name) { return name !== ""; });
+    if (names.length > 0) {
+        loadedFromURL = true; // Flag that names were successfully loaded from URL.
     }
   }
-  $("#namesbox").val(namesbreak);
+  
+  // If names were not loaded from URL, use a copy of the defaultNames array.
+  if (!loadedFromURL) {
+    names = defaultNames.slice(); 
+  }
+
+  // Populate the textarea with the current list of names, one per line.
+  $("#namesbox").val(names.join('\n'));
+
+  // UI Feedback for reset action.
+  clearTimeout(feedbackTimeout); // Clear any existing feedback timeout.
+  var resetMessage = loadedFromURL ? "Name list loaded from URL." : "Name list reset to defaults.";
+  
+  // Update headline: if it's not the original, update directly. Otherwise, fade out/in.
+  // This avoids interrupting a "Winner" message.
+  if ($('#headline').text() !== originalHeadline && $('#headline').text() !== '🎉 We have a Winner! 🎉') { 
+     $('#headline').text(resetMessage);
+  } else {
+     $('#headline').fadeOut(function() {
+        $(this).text(resetMessage).fadeIn();
+     });
+  }
+  // Set a timeout to revert the headline to its original state.
+  feedbackTimeout = setTimeout(function() {
+    $('#headline').fadeOut(function() {
+      $(this).text(originalHeadline).fadeIn();
+    });
+  }, 3000);
+
+  // Disable "GO!" button if the list is empty, otherwise enable it.
+  if (names.length === 0) {
+    $('#go').attr('disabled', 'disabled');
+  } else {
+    $('#go').removeAttr('disabled');
+  }
 }
 
-function gup(para)
-{
-  para = para.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
-  var regexS = "[\\?&]"+para+"=([^&#]*)";
-  var regex = new RegExp( regexS );
-  var results = regex.exec( window.location.href );
-  if( results == null )
-    return "";
-  else
-    return results[1];
-}
+// The gup function is no longer needed.
+// function gup(para)
+// {
+//   para = para.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+//   var regexS = "[\\?&]"+para+"=([^&#]*)";
+//   var regex = new RegExp( regexS );
+//   var results = regex.exec( window.location.href );
+//   if( results == null )
+//     return "";
+//   else
+//     return results[1];
+// }
 
+// Returns a random number for shuffling the names array (sort function callback).
 function randOrd(){
 	return (Math.round(Math.random())-0.5); 
 }
 
+// Saves the names from the textarea to the global 'names' array and updates UI.
 function save(){
-        $("#varnote").hide();
-        $("#popdown").show();
-        $("#values").hide();
+        $("#varnote").hide(); // Hide the logo/initial message.
+        $("#popdown").show(); // Ensure namesbox container is visible.
+        $("#values").hide(); // Hide the spinning name values display.
         $("div").remove("#result1");
-        savenames = $("#namesbox").val();
-        savenames = savenames.replace(/\n\r?/g, '101');
-        $('#headline').fadeOut();
-        $('#headline').text('The name list is saved and updated.').fadeIn();
-        $("#names").show();
-        $('#namesbox').attr('disabled','disabled');
+        var namesFromTextarea = $("#namesbox").val();
+        // Update the global names array
+        names = namesFromTextarea.split('\n').filter(function(name) { return name.trim() !== ""; });
+        
+        // The original functionality of replacing newlines with '101' seems specific to how names are saved or passed in URLs.
+        // If this is still needed for other purposes, it should be handled where that specific format is required.
+        // For now, we'll focus on updating the global 'names' array for the 'go()' function.
+        // savenames = savenames.replace(/\n\r?/g, '101'); // This line might be part of a different logic, e.g., saving to URL.
+
+        $('#headline').fadeOut(); // Fade out current headline.
+        $('#headline').text('The name list is saved and updated.').fadeIn(); // Display confirmation.
+        $("#names").show(); // Ensure the namesbox and its container are visible.
+        $('#namesbox').attr('disabled','disabled'); // Disable textarea after saving.
 }
 
+// Prepares the UI for editing the list of names.
 function namelist(){
-        $("#varnote").hide();
-        $('#namesbox').removeAttr('disabled','disabled');
-        $('#headline').text('Configure name list');
-        $("#popdown").show();
-        $("#values").hide();
-        $("#names").show();
-        $('body').css({"overflow-y": "visible"});
+        $("#varnote").hide(); // Hide the logo/initial message.
+        // Enable textarea and add a temporary visual highlight.
+        $('#namesbox').removeAttr('disabled','disabled').addClass('highlight-namesbox');
+        setTimeout(function() { $('#namesbox').removeClass('highlight-namesbox'); }, 1500);
+
+        clearTimeout(feedbackTimeout); // Clear any existing feedback timeout.
+        // Update headline to instruct user on editing the list.
+        $('#headline').fadeOut(function() {
+          $(this).text('Configure name list. Edit below and click "Save & Update".').fadeIn();
+        });
+        // Note: No timeout to revert headline here, it stays until the next action.
+
+        $("#popdown").show(); // Ensure namesbox container is visible.
+        $("#values").hide(); // Hide the spinning name values display.
+        $("#names").show(); // Ensure the namesbox itself is visible.
+        $('body').css({"overflow-y": "visible"}); // Allow body scrolling for potentially long lists.
 }
 
-// does the actual animation
-function go(){
-  $("#varnote").hide();
-  $('body').css({"overflow-y": "hidden"});
-  $('#go').attr('disabled','disabled');
-  $('#list').attr('disabled','disabled');
-  $('#save').attr('disabled','disabled');
-  $('#headline').slideUp();
-  $('#namesbox').slideDown();
+// Clears the current list of names and updates the UI.
+function clearList() {
+  $("#varnote").hide(); // Hide the logo/initial message.
+  $("#popdown").show(); // Ensure namesbox container is visible.
+  $("#values").hide(); // Hide the spinning name values display.
+  $("div").remove("#result1"); // Remove any previous winner display
+  $('.button-group').show(); // Ensure buttons are visible
 
-  var count = 1;
-  count = 1;
-  $("div").remove("#result1");
-  names = $("#namesbox").val();
-  if(document.all) { // IE
-    names=names.split("\n");
-  }
-  else { //Mozilla
-    names=names.split("\n");
-  }
-  $("#values").show();
-  $(".name").show();
-  $("#popdown").hide();
-  $("div").remove(".name");
-  $("div").remove(".extra");
-  $("#playback").html("");
-  newtop = names.length * 200 * -1;
-  //$('#values').css({top: -300});
-  $('#values').css({top: + newtop});	
-  names.sort( randOrd );
-  var fruits = new Array ( "apple", "pear", "orange", "banana" );
-  //console.log(fruits);
-  //console.log(names);
-  //alert(newtop);
-  for(var i in names){
-    if (names[i] == "" || typeof(names[i]) == undefined){
-      count = count-1;
-    } else {
-      name = names[i];
-      //console.log(name);
-      $('#values').append('<div id=result'+count+' class=name>'+name+'</div>');
-    }
-    count = count+1;
-  }
-  for(var i in names){
-    if (names[i] == "" || typeof(names[i]) == undefined){}else{
-      name = names[i];
-      $('#values').append('<div class=name>'+name+'</div>');
-    }
-    count = count+1;
-  }
-  for(var i in names){
-    if (names[i] == "" || typeof(names[i]) == undefined){}else{
-      name = names[i];
-      $('#values').append('<div class=name>'+name+'</div>');
-    }
-    count = count+1;
-  }
-  text = $('#result1').text()
-  $('#values').animate({top: '+176'},5000);
-
-  // make it stand out
-  setTimeout("standout(text)",5000);
-  //setTimeout("$('#playback').hide('slow')",11005);
-}
-
-function standout(text){
-
-        $('#result1').removeClass('name');
-        $('.name').animate({opacity: .25});
-        $('#result1').animate({height: '+=60px'});
-        $('#result1').append('<div class="extra"><a class="small alert button" href="#" onClick="removevictim();">Remove name from list</a></div>');
-        $('#go').removeAttr('disabled','disabled');
-        $('#list').removeAttr('disabled','disabled');
-        $('#save').removeAttr('disabled','disabled');
-        $('#headline').text('Found the Winner!');
-        $('#headline').slideDown();
-}
-
-function removevictim(){
-	// Removing victim from array and UI
-	// names = names.filter(function(){ return true});
-	// Rewriting namesbox contents
-	var nameupdated = "";
-	for(var i in names){
-		name = names[i];
-                if (name == "" || name == text || typeof(name) == undefined){}else{
-			nameupdated = nameupdated + "\n" + name;
-		}
-	}
-	$('#namesbox').val("");
-  $('#namesbox').val(nameupdated);
-  $('#result1').html("Removed");
-  $('#result1').fadeOut(1000, function(){
-    $("div").remove("#result1");
+  names = []; // Clear the global names array
+  $("#namesbox").val(""); // Clear the textarea
+  
+  clearTimeout(feedbackTimeout);
+  $('#headline').fadeOut(function() { // Update headline to confirm clearance.
+    $(this).text('Name list has been cleared. Add names or click Reset.').fadeIn();
   });
-  $("div").remove(".name");
-  $("div").remove(".extra");
-  $('#headline').text('OK, done! Let\'s see who is next? Just click "GO!" button for next roll.');
+  // Set a timeout to revert the headline to its original state.
+  feedbackTimeout = setTimeout(function() {
+    $('#headline').fadeOut(function() {
+      $(this).text(originalHeadline).fadeIn();
+    });
+  }, 3000);
+  
+  $('#namesbox').removeAttr('disabled').removeClass('highlight-namesbox'); // Ensure textarea is editable.
+  $("#names").show(); // Ensure namesbox container is visible.
+  $('#go').attr('disabled', 'disabled'); // Disable "GO!" button as list is empty.
+  // Ensure other buttons are enabled.
+  $('#list').removeAttr('disabled');
+  $('#save').removeAttr('disabled');
+  // Note: id="reset" is an <a> tag, so it doesn't get disabled by jQuery's attr('disabled') like buttons.
+}
+
+
+// Handles the animation and selection of a winner from the 'names' list.
+function go(){
+  // Check if there are names in the list; if not, alert the user and exit.
+  if (names.length === 0) {
+    alert("The list is empty! Please add some names or reset the list.");
+    return;
+  }
+  $("#varnote").hide(); // Hide the logo/initial message.
+  $('body').css({"overflow-y": "hidden"}); // Prevent body scrolling during animation.
+  
+  // Disable all action buttons during the spinning animation.
+  $('.button-group button').attr('disabled','disabled');
+  $('#reset').addClass('disabled'); // Add 'disabled' class for the reset link.
+
+  $('#headline').slideUp(); // Hide the headline.
+  // $('#namesbox').slideDown(); // Original code showed namesbox, hiding it for clarity during spin.
+  $("#popdown").hide(); // Hide the namesbox container during animation.
+
+  $("div").remove("#result1"); // Remove any previous winner display elements.
+  $('#values').empty(); // Clear any previous names from the #values container.
+  
+  $("#values").show(); // Show the #values container that will hold the spinning names.
+  
+  // Create a shuffled copy of the names array for display.
+  var displayNames = names.slice(); 
+  displayNames.sort(randOrd); // Shuffle the names.
+
+  // Populate the #values div with names for the animation.
+  // The list is appended once. The visual effect of "more names" comes from the animation itself
+  // and the fact that only a portion of the list is visible at any time.
+  for (var i = 0; i < displayNames.length; i++) {
+      if (displayNames[i] == "" || typeof(displayNames[i]) == undefined) {
+          // Skip empty or undefined names.
+      } else {
+          let currentName = displayNames[i];
+          // The first name in the shuffled list is designated as the winner with id="result1".
+          let divId = (i === 0) ? 'result1' : 'res' + i; 
+          $('#values').append('<div id="' + divId + '" class="name">' + currentName + '</div>');
+      }
+  }
+  
+  // Calculate the initial top position for the #values container to start the animation.
+  // This is based on the original logic (names.length * 200 * -1), 
+  // but using displayNames.length for accuracy if filtering occurred.
+  // The actual visual length of the scroll is more dependent on the animation parameters than this calculated 'newtop'.
+  // A simpler approach for 'newtop' might be just to ensure 'result1' is off-screen initially if the list is very short.
+  // For now, keeping a similar calculation but ensuring it's based on the current list being displayed.
+  var newtop = (displayNames.length > 1) ? (displayNames.length * 100 * -1) : 0; // Adjusted multiplier for smoother start with single list append
+  $('#values').css({top: newtop}); 
+
+  // The winning name is the text content of the #result1 element.
+  text = $('#result1').text(); 
+  
+  // Animate the #values container to simulate spinning.
+  // The animation moves the list downwards; #result1 will land at the 'winning' position.
+  // The '+176' is the target position for #result1. This might need adjustment
+  // if the height of .name elements or #result1's final style changes significantly.
+  $('#values').animate({top: '+176'}, 5000, 'swing', function() { 
+      // Callback function executed after animation completes.
+      standout(text); // Call standout to highlight the winner.
+  });
+}
+
+// Highlights the winner and updates the UI.
+function standout(winnerText){ 
+    // Remove all other names from the #values container, leaving only #result1.
+    $('#values div').not('#result1').remove(); 
+    // Apply the .winner-display style to #result1 and remove .name style.
+    $('#result1').addClass('winner-display').removeClass('name'); 
+    
+    // $('.name').animate({opacity: .25}); // No longer needed as other names are removed.
+    // The height animation might conflict with CSS, let CSS handle size.
+    // $('#result1').animate({height: '+=60px'}); // Height is handled by .winner-display CSS.
+
+    // Append the "Remove Winner & Roll Again" button to the winner display.
+    $('#result1').append('<div class="extra"><a class="small alert button" href="#" onClick="removevictim(); return false;">Remove Winner & Roll Again</a></div>');
+    
+    // Re-enable all action buttons.
+    $('#go').removeAttr('disabled');
+    $('#list').removeAttr('disabled');
+    $('#save').removeAttr('disabled');
+    $('#clearlist').removeAttr('disabled');
+    $('#reset').removeClass('disabled'); // Remove 'disabled' class from reset link.
+    
+    clearTimeout(feedbackTimeout); // Clear any existing feedback timeout.
+    $('#headline').text('🎉 We have a Winner! 🎉').slideDown(); // Display winner message.
+    $('.button-group').show(); // Ensure the main button group is visible.
+}
+
+// Removes the winning name from the list and updates the UI.
+function removevictim(){
+  // Filter the global 'names' array to remove the winner (stored in 'text') and any empty strings.
+  names = names.filter(function(name) {
+    return name.trim() !== "" && name.trim() !== text.trim(); // Ensure trimming for robust comparison.
+  });
+  
+  // Update the textarea with the modified list of names.
+  $('#namesbox').val(names.join('\n')); 
+  
+  // Fade out and remove the winner display element (#result1).
+  $('#result1').fadeOut(1000, function(){
+    $(this).remove(); 
+  });
+  
+  clearTimeout(feedbackTimeout); // Clear any existing feedback timeout.
+  // Display message confirming removal and set timeout to revert to original headline.
+  $('#headline').text('Winner removed. Roll again or manage list.').fadeIn();
+  feedbackTimeout = setTimeout(function() {
+    $('#headline').fadeOut(function() {
+      $(this).text(originalHeadline).fadeIn();
+    });
+  }, 3000);
+
+  // If the list becomes empty after removal, disable "GO!" and update headline.
+  if (names.length === 0) {
+    $('#go').attr('disabled', 'disabled');
+    $('#headline').text('List is now empty! Add names or Reset.').fadeIn();
+    // Set another timeout to revert this specific headline too.
+     feedbackTimeout = setTimeout(function() {
+      $('#headline').fadeOut(function() {
+        $(this).text(originalHeadline).fadeIn();
+      });
+    }, 3000);
+  }
 }
 
 </script>
